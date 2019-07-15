@@ -3,10 +3,14 @@ require 'active_record'
 module Audited
   class << self
     attr_accessor :ignored_attributes, :current_user_method, :max_audits, :auditing_enabled
-    attr_writer :audit_class
+    attr_writer :audit_class, :audit_parent_class
 
     def audit_class
       @audit_class ||= Audit
+    end
+
+    def audit_parent_class
+      @audit_parent_class ||= ::ActiveRecord::Base
     end
 
     def store

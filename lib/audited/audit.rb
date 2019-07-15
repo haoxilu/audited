@@ -33,7 +33,7 @@ module Audited
     end
   end
 
-  class Audit < ::ActiveRecord::Base
+  class Audit < Audited.audit_parent_class
     belongs_to :auditable,  polymorphic: true
     belongs_to :user,       polymorphic: true
     belongs_to :associated, polymorphic: true
@@ -131,7 +131,7 @@ module Audited
     # by +user+. This method is hopefully threadsafe, making it ideal
     # for background operations that require audit information.
     def self.as_user(user)
-      last_audited_user = ::Audited.store[:audited_user] 
+      last_audited_user = ::Audited.store[:audited_user]
       ::Audited.store[:audited_user] = user
       yield
     ensure

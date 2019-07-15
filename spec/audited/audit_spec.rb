@@ -174,8 +174,10 @@ describe Audited::Audit do
       it "uses created at" do
         Audited::Audit.delete_all
         audit = Models::ActiveRecord::User.create(name: "John").audits.last
-        audit.update_columns(created_at: Time.parse('2018-01-01'))
-        expect(Audited::Audit.collection_cache_key).to match(/-20180101\d+$/)
+        p audit
+        audit.update_columns(created_at: Time.utc(2019, 1, 1))
+        p audit
+        expect(Audited::Audit.collection_cache_key).to match(/-20190101\d+$/)
       end
     else
       it "is not defined" do
