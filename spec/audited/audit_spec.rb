@@ -7,7 +7,12 @@ describe Audited::Audit do
 
   describe "audit class" do
     around(:example) do |example|
+      original_audit_parent_class = Audited.audit_parent_class
       original_audit_class = Audited.audit_class
+
+      class CustomParentAudit < ::ActiveRecord::Base
+        self.abstract_class = true
+      end
 
       class CustomAudit < Audited::Audit
         def custom_method
@@ -21,9 +26,13 @@ describe Audited::Audit do
 
       example.run
 
-      Audited.config { |config| config.audit_class = original_audit_class }
+      Audited.config do |config|
+        config.audit_parent_class = original_audit_parent_class
+        config.audit_class = original_audit_class
+      end
       Audited::Audit.audited_class_names.delete("TempModel")
       Object.send(:remove_const, :TempModel)
+      Object.send(:remove_const, :CustomParentAudit)
       Object.send(:remove_const, :CustomAudit)
     end
 
@@ -49,6 +58,32 @@ describe Audited::Audit do
         audit = record.audits.first
         expect(audit).to be_a Audited::Audit
         expect(audit.respond_to?(:custom_method)).to be false
+      end
+    end
+
+    context "when a custom parent audit class is configured" do
+      it 'should be inherited Audited.audit_parent_class' do
+        Audited.config { |config| config.audit_parent_class = CustomParentAudit }
+        TempModel.audited
+
+        p Audited.audit_parent_class
+        p Audited::Audit.superclass
+        record = TempModel.create
+
+        audit = record.audits.first
+        p record.audits.first
+        expect(audit.class.superclass).to be CustomParentAudit
+      end
+    end
+
+    context "when a custom audit class is not configured" do
+      it "should default to ActiveRecord::Base" do
+        TempModel.audited
+
+        record = TempModel.create
+
+        audit = record.audits.first
+        expect(audit.class.superclass).to be ActiveRecord::Base
       end
     end
   end
